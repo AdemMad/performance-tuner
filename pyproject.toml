@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "performance-tuner"
+version = "0.1.0"
+description = "Profile analytical datasets and recommend partitioning, clustering, bucketing, indexing, and compaction strategies."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Codex" },
+    { name = "Adem Madoun" },
+]
+keywords = [
+    "analytics",
+    "data-engineering",
+    "parquet",
+    "query-optimization",
+    "snowflake",
+    "databricks",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "polars>=0.20",
+]
+
+[project.optional-dependencies]
+config = [
+    "PyYAML>=6.0",
+]
+parquet = [
+    "pyarrow>=15.0",
+]
+snowflake = [
+    "pandas>=2.0",
+    "pyarrow>=15.0",
+    "snowflake-connector-python[pandas]>=3.0",
+]
+databricks = [
+    "databricks-sql-connector>=3.0",
+    "pyarrow>=15.0",
+]
+mssql = [
+    "pandas>=2.0",
+    "pyarrow>=15.0",
+    "pyodbc>=5.0",
+]
+postgres = [
+    "pandas>=2.0",
+    "psycopg2-binary>=2.9",
+    "pyarrow>=15.0",
+]
+all = [
+    "PyYAML>=6.0",
+    "databricks-sql-connector>=3.0",
+    "pandas>=2.0",
+    "psycopg2-binary>=2.9",
+    "pyarrow>=15.0",
+    "pyodbc>=5.0",
+    "snowflake-connector-python[pandas]>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/AdemMad/performance-tuner"
+Repository = "https://github.com/AdemMad/performance-tuner"
+Issues = "https://github.com/AdemMad/performance-tuner/issues"
+
+[tool.setuptools]
+packages = ["advisor", "connectors", "performance_tuner"]
+py-modules = ["models", "utils"]

@@ -1,0 +1,94 @@
+# =============================================================================
+# Performance Tuner — Configuration
+# =============================================================================
+# Fill in the connection blocks you need; leave the rest blank.
+# Sensitive values (passwords, tokens) can be overridden at runtime by passing
+# the auth dict directly to SmartAdvisor.from_warehouse() — this file is a
+# convenient default store, not a secrets manager.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Advisor defaults
+# ---------------------------------------------------------------------------
+defaults:
+  # Max rows read from the source when profiling columns.
+  # Lower = faster; higher = more accurate cardinality estimates.
+  sample_rows: 250_000
+
+  # Target Parquet file size used for compaction recommendations.
+  target_file_size_mb: 200
+
+  # Default platform for recommendations when not specified at runtime.
+  # Choices: generic | databricks | snowflake | fabric | sqlserver | azuresql | postgres
+  platform: generic
+
+  # Platform-specific tuning knobs (apply when platform = "databricks")
+  platform_options:
+    use_liquid_clustering: true
+    use_zorder: false
+    max_partition_columns: 2
+
+
+# ---------------------------------------------------------------------------
+# Snowflake
+# ---------------------------------------------------------------------------
+snowflake:
+  account: ""           # e.g. xy12345.eu-west-1
+  user: ""
+  password: ""          # prefer env var SNOWFLAKE_PASSWORD
+  database: ""          # e.g. FOOTBALL
+  schema: ""            # e.g. PUBLIC
+  warehouse: ""         # e.g. COMPUTE_WH
+  role: ""              # optional; leave blank for default role
+  login_timeout: 60     # seconds
+
+
+# ---------------------------------------------------------------------------
+# Databricks
+# ---------------------------------------------------------------------------
+databricks:
+  server_hostname: ""   # e.g. adb-1234567890.1.azuredatabricks.net
+  http_path: ""         # e.g. /sql/1.0/warehouses/abc123
+  access_token: ""      # prefer env var DATABRICKS_TOKEN
+  catalog: ""           # Unity Catalog name; blank = session default
+  schema_name: ""       # schema / database name; blank = session default
+
+
+# ---------------------------------------------------------------------------
+# Azure SQL Database
+# ---------------------------------------------------------------------------
+azure_sql:
+  server: ""            # e.g. myserver.database.windows.net
+  database: ""
+  username: ""
+  password: ""          # prefer env var AZURE_SQL_PASSWORD
+  driver: "ODBC Driver 18 for SQL Server"
+  port: 1433
+  encrypt: true
+  trust_server_certificate: false
+
+
+# ---------------------------------------------------------------------------
+# SQL Server (on-prem / VM)
+# ---------------------------------------------------------------------------
+sqlserver:
+  server: ""            # e.g. MYSERVER\SQLEXPRESS or 192.168.1.10
+  database: ""
+  username: ""          # omit for Windows auth
+  password: ""          # omit for Windows auth; prefer env var SS_PASSWORD
+  driver: "ODBC Driver 18 for SQL Server"
+  port: 1433
+  encrypt: false
+  trust_server_certificate: true
+
+
+# ---------------------------------------------------------------------------
+# PostgreSQL
+# ---------------------------------------------------------------------------
+postgres:
+  host: "localhost"
+  port: 5432
+  database: ""
+  user: ""
+  password: ""          # prefer env var PGPASSWORD
+  sslmode: ""           # e.g. require | disable | prefer; blank = libpq default
