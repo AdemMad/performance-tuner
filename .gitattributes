@@ -1,0 +1,11 @@
+# Normalize line endings: store as LF, check out as LF on all platforms
+# (important — Docker containers and Python tools expect LF)
+* text=auto eol=lf
+
+# Binaries — no line-ending conversion
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
