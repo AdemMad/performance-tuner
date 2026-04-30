@@ -5,9 +5,9 @@ A web app that connects to your data warehouse, profiles table columns, and prov
 ## What it does
 
 1. **Connect** — enter credentials for Snowflake, Databricks, Azure SQL, SQL Server, or PostgreSQL.
-2. **Analyze** — run a SQL query; the app profiles every column for cardinality, null %, and scores each one for partition / cluster / bucket / index suitability.
-3. **Review** — see a ranked column table, platform-specific layout strategy, and detected anti-patterns.
-4. **Ask AI** — paste a Gemini API key and get structured optimization advice: recommended DDL, high-impact actions, and platform-specific gotchas.
+2. **Insights** — run pre-built queries (most queried tables, clustering info, table sizes, expensive queries, column stats) — SQL auto-generated for your warehouse, editable before running.
+3. **Analyze** — run a SQL query; the app profiles every column for cardinality, null %, and scores each one for partition / cluster / bucket / index suitability.
+4. **Ask AI** — paste a Gemini API key; the LLM receives both the column profile and your insight results, then gives structured optimization advice: recommended DDL, high-impact actions, and platform-specific gotchas.
 
 ---
 
@@ -63,10 +63,23 @@ The Vite dev server runs at **http://localhost:5173** and proxies `/api/` to `lo
 
 ### 1. Connect
 Select your warehouse from the dropdown and fill in the credentials.  
-All fields stay in the browser — credentials are sent directly to your warehouse on each request and are never stored.
+All credentials stay in the browser — they are sent directly to your warehouse on each request and are never stored server-side.
 
-### 2. Write a query
-Enter a SQL query that returns a representative sample of the table you want to optimise. A few thousand to a few hundred thousand rows is ideal:
+### 2. Quick Insights
+Pick an insight type, fill in optional parameters (schema, table name, lookback days).  
+The SQL is auto-generated for your warehouse and is fully editable before running.  
+Run as many insights as you like — all results are collected and automatically included when you ask for AI advice.
+
+| Insight | What it surfaces |
+|---------|-----------------|
+| Most Queried Tables | Access counts, sequential vs index scans |
+| Table Clustering / Indexes | Clustering keys, clustered indexes, index usage |
+| Table Sizes & Access Counts | Row count, MB, read counts combined |
+| Most Queried Columns | Column-level access (Snowflake) or column stats/sizes |
+| Most Expensive Queries | Top queries by elapsed time + partition scan % |
+
+### 3. Analyze Table
+Enter a SQL query returning a representative sample of the table you want to optimise:
 
 ```sql
 -- Snowflake example
@@ -76,12 +89,7 @@ SELECT * FROM analytics.fact_events LIMIT 200000;
 SELECT * FROM hive_metastore.football.tracking WHERE match_id IN (1, 2, 3);
 ```
 
-### 3. Analyze
-Click **Analyze Table**. The app:
-- Fetches the sample from your warehouse
-- Profiles each column: approximate unique count, null ratio, min/max
-- Scores each column for partition, cluster, bucket, and index suitability
-- Identifies anti-patterns (e.g. partitioning on a high-cardinality ID)
+The app profiles each column: approximate unique count, null ratio, min/max, and scores for partition / cluster / bucket / index suitability.
 
 ### 4. Read the column table
 
@@ -99,9 +107,9 @@ Score colour guide: **green** ≥ 2.5 · **amber** ≥ 1.5 · **blue** ≥ 0.5 �
 
 ### 5. Get AI advice
 Paste a **Gemini API key** (get one free at [aistudio.google.com](https://aistudio.google.com)) and click **Get AI Advice**.  
-The AI receives the full column profile and returns:
+The AI receives the full column profile **and** all collected insight results, then returns:
 - Recommended data layout (partition / cluster / sort / bucket / index)
-- Top 3 high-impact actions
+- Top 3 high-impact actions referencing actual usage patterns
 - Platform-specific gotchas to avoid
 - Sample DDL / SQL for your platform
 
@@ -123,20 +131,24 @@ The AI receives the full column profile and returns:
 
 ```
 performance_tuner/
-├── advisor/             # Column profiling, scoring, simulation logic
-├── connectors/          # Warehouse connector adapters
+├── advisor/             # Column profiling, scoring, simulation, platform recommendations
+├── connectors/          # Warehouse adapters (Snowflake, Databricks, Azure SQL, SQL Server, PostgreSQL)
 ├── models.py            # Dataclass models (ColumnProfile, DatasetReport, …)
 ├── utils.py             # Shared utilities
-├── api.py               # FastAPI backend (NEW)
-├── requirements-api.txt # Python dependencies (NEW)
-├── Dockerfile.backend   # Backend Docker image (NEW)
-├── docker-compose.yml   # Compose orchestration (NEW)
-└── frontend/            # React app (NEW)
+├── api.py               # FastAPI backend (/api/profile, /api/run-query, /api/gemini-advice)
+├── requirements-api.txt # Python dependencies
+├── Dockerfile.backend   # Backend Docker image
+├── docker-compose.yml   # One-command startup
+├── config.yaml.example  # CLI config template (copy to config.yaml to use main.py)
+└── frontend/            # React + Vite UI
     ├── src/
-    │   ├── App.jsx      # Main UI
-    │   └── App.css      # Styles
+    │   ├── App.jsx      # Main UI (all components)
+    │   ├── App.css      # Styles
+    │   ├── queries.js   # Pre-built SQL templates per warehouse
+    │   └── main.jsx     # Entry point
     ├── Dockerfile
-    └── nginx.conf
+    ├── nginx.conf
+    └── vite.config.js
 ```
 
 ---
@@ -151,5 +163,27 @@ performance_tuner/
 
 ---
 
+## CLI usage (Python only, no web UI)
+
+The original `main.py` entry point still works for scripted or notebook workflows:
+
+```python
+from advisor import SmartAdvisor
+
+advisor = SmartAdvisor.from_warehouse(
+    storage="snowflake",
+    auth={"account": "...", "user": "...", "password": "...",
+          "database": "FOOTBALL", "schema": "PUBLIC", "warehouse": "COMPUTE_WH"},
+    query="SELECT * FROM tracking WHERE match_id IN (1, 2)",
+    platform="snowflake",
+)
+advisor.print_dataset_summary()
+advisor.print_simulated_clustering_metadata(["match_id", "period"])
+```
+
+Copy `config.yaml.example` to `config.yaml` to use YAML-based connection settings.
+
+---
+
 ## Security note
-Credentials are passed from your browser to the backend on each request and used only to open a short-lived warehouse connection. They are not logged or stored. For production use, consider adding authentication to the API.
+Credentials are passed from your browser to the backend on each request and used only to open a short-lived warehouse connection. They are not logged or stored. For production deployments, consider adding authentication middleware to the API.

@@ -1,9 +1,11 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.pyo
 *.egg-info/
 .eggs/
+.Python
 dist/
 build/
 *.log
@@ -11,10 +13,19 @@ build/
 .env.*
 venv/
 .venv/
+env/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Config file may contain real credentials — copy config.yaml.example to use
 config.yaml
+
+# Data files
+*.parquet
+*.duckdb
 
 # Node / Frontend
 frontend/node_modules/
